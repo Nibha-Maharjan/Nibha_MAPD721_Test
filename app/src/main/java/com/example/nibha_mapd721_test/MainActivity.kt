@@ -72,6 +72,7 @@ fun MainContent() {
 @Composable
 fun CustomAppBar(userStore: UserStore) {
     var isShoppingCartOpen by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
 
     TopAppBar(
         title = {
@@ -88,9 +89,12 @@ fun CustomAppBar(userStore: UserStore) {
             IconButton(
                 onClick = {
                     // Clear button logic here
+                    coroutineScope.launch {
+                        userStore.clearCart()  // Call clearCart within a coroutine
+                    }
                 }
             ) {
-                Icon(Icons.Default.Clear, contentDescription = null)
+                Text("Clear")  // Change the Clear button from icon to text
             }
         }
     )
@@ -166,51 +170,54 @@ fun ProductItem(productName: String, price: String, onAddToCartClick: () -> Unit
         }
     }
 }
-
 @Composable
 fun ShoppingCart(userStore: UserStore, onDismiss: () -> Unit) {
-    var details by remember(userStore) { mutableStateOf(emptyList<String>()) }
-
-    DisposableEffect(userStore) {
-        val detailsFlow = userStore.getDetails
-        val job = GlobalScope.launch {
-            detailsFlow.collect { updatedDetails ->
-                details = updatedDetails
-            }
-        }
-        onDispose {
-            job.cancel()
-        }
-    }
+    val details = userStore.getDetails.collectAsState(emptyList()).value
 
     Dialog(
         onDismissRequest = onDismiss,
-        properties = DialogProperties(dismissOnClickOutside = true),
         content = {
-            Column(
+            Surface(
                 modifier = Modifier
                     .padding(16.dp)
-                    .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.background) // Ensure a solid background color
+                    .fillMaxWidth(),
+                shape = MaterialTheme.shapes.medium,
+                color = MaterialTheme.colorScheme.background
             ) {
-                Text("Shopping Cart Items", style = MaterialTheme.typography.bodyLarge)
-                Spacer(modifier = Modifier.height(8.dp))
+                Column(
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .fillMaxWidth()
+                ) {
+                    Text("Shopping Cart Items", style = MaterialTheme.typography.bodyLarge)
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                if (details.isNotEmpty()) {
-                    details.forEach { item ->
-                        Text(
-                            text = "\u2022 $item", // Bullet point for each item
-                            style = MaterialTheme.typography.bodyLarge,
-                            modifier = Modifier.padding(vertical = 4.dp)
-                        )
+                    if (details.isNotEmpty()) {
+                        LazyColumn {
+                            items(details) { item ->
+                                val itemName = item.split(":")[1].trim()  // Extracting item name
+                                if (item.contains("Name") || item.contains("Price")) {
+                                    Text(itemName, style = MaterialTheme.typography.bodyLarge)
+                                }
+                            }
+                        }
+                    } else {
+                        Text("Your shopping cart is empty.", style = MaterialTheme.typography.bodyLarge)
                     }
-                } else {
-                    Text("Your shopping cart is empty.", style = MaterialTheme.typography.bodyLarge)
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Button(onClick = onDismiss) {
+                        Text("Close")
+                    }
                 }
             }
         }
     )
 }
+
+
+
 
 
 

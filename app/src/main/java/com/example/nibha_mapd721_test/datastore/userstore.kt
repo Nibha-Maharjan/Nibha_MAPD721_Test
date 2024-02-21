@@ -40,9 +40,17 @@ class UserStore(private val context: Context) {
         context.dataStore.edit { preferences ->
             val currentTimeMillis = System.currentTimeMillis().toString()
 
-            preferences[PRODUCT_ID] = "$productId - $currentTimeMillis"
-            preferences[PRODUCT_NAME] = "$productName - $currentTimeMillis"
-            preferences[PRICE] = "$price - $currentTimeMillis"
+            preferences[PRODUCT_ID] = "$productId "
+            preferences[PRODUCT_NAME] = "$productName "
+            preferences[PRICE] = "$price "
         }
     }
+    suspend fun clearCart() {
+        context.dataStore.edit { preferences ->
+            preferences.remove(PRODUCT_ID)
+            preferences.remove(PRODUCT_NAME)
+            preferences.remove(PRICE)
+        }
+    }
+
 }
