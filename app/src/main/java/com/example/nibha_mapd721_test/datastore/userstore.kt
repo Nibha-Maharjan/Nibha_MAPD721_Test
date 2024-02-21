@@ -18,6 +18,7 @@ class UserStore(private val context: Context) {
         val PRODUCT_ID = stringPreferencesKey("product_id")
         val PRODUCT_NAME = stringPreferencesKey("product_name")
         val PRICE = stringPreferencesKey("price")
+        val PRODUCTS = stringPreferencesKey("products")
     }
 
     //List of string
@@ -34,15 +35,20 @@ class UserStore(private val context: Context) {
             productList.add("Price: $price")
 
             productList
+
         }
+
+
 
     suspend fun saveDetails(productId: String, productName: String, price: String) {
         context.dataStore.edit { preferences ->
-            val currentTimeMillis = System.currentTimeMillis().toString()
 
             preferences[PRODUCT_ID] = "$productId "
             preferences[PRODUCT_NAME] = "$productName "
             preferences[PRICE] = "$price "
+            val existingProducts = preferences[PRODUCTS] ?: ""
+            val updatedProducts = "$existingProducts,$productId:$productName:$price"
+            preferences[PRODUCTS] = updatedProducts
         }
     }
     suspend fun clearCart() {
@@ -50,6 +56,7 @@ class UserStore(private val context: Context) {
             preferences.remove(PRODUCT_ID)
             preferences.remove(PRODUCT_NAME)
             preferences.remove(PRICE)
+            preferences.remove(PRODUCTS)
         }
     }
 

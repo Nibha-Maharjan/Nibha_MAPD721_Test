@@ -113,6 +113,7 @@ fun CustomAppBar(userStore: UserStore) {
 fun ProductList(userStore: UserStore) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
+    val detailsState by rememberUpdatedState(userStore.getDetails.collectAsState(emptyList()))
 
     LazyColumn(
         modifier = Modifier
@@ -132,6 +133,7 @@ fun ProductList(userStore: UserStore) {
         }
     }
 }
+
 
 @Composable
 fun ProductItem(productName: String, price: String, onAddToCartClick: () -> Unit) {
@@ -172,7 +174,8 @@ fun ProductItem(productName: String, price: String, onAddToCartClick: () -> Unit
 }
 @Composable
 fun ShoppingCart(userStore: UserStore, onDismiss: () -> Unit) {
-    val details = userStore.getDetails.collectAsState(emptyList()).value
+    val detailsState = userStore.getDetails.collectAsState(null)
+    val details = detailsState.value ?: emptyList()
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -193,12 +196,10 @@ fun ShoppingCart(userStore: UserStore, onDismiss: () -> Unit) {
                     Spacer(modifier = Modifier.height(16.dp))
 
                     if (details.isNotEmpty()) {
-                        LazyColumn {
-                            items(details) { item ->
-                                val itemName = item.split(":")[1].trim()  // Extracting item name
-                                if (item.contains("Name") || item.contains("Price")) {
-                                    Text(itemName, style = MaterialTheme.typography.bodyLarge)
-                                }
+                        for (item in details) {
+                            val itemName = item.split(":")[1].trim()  // Extracting item name
+                            if (item.contains("Name") || item.contains("Price")) {
+                                Text(itemName, style = MaterialTheme.typography.bodyLarge)
                             }
                         }
                     } else {
@@ -215,6 +216,7 @@ fun ShoppingCart(userStore: UserStore, onDismiss: () -> Unit) {
         }
     )
 }
+
 
 
 
