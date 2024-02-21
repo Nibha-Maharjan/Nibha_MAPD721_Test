@@ -66,7 +66,11 @@ dependencies {
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
-    implementation ("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
+    //implementation ("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")
+    implementation ("androidx.lifecycle:lifecycle-runtime-ktx:2.3.1")
+    implementation ("androidx.compose.runtime:runtime-livedata:1.0.5")
+
+
     // Preferences DataStore (SharedPreferences like APIs)
     dependencies {
         implementation("androidx.datastore:datastore-preferences:1.0.0")

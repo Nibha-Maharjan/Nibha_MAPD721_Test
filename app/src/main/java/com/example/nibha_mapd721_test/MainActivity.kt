@@ -10,6 +10,7 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -18,21 +19,22 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.example.nibha_mapd721_test.datastore.UserStore
 import com.example.nibha_mapd721_test.ui.theme.Nibha_MAPD721_TestTheme
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import java.util.Date
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -58,7 +60,7 @@ fun MainContent() {
 
     Scaffold(
         topBar = {
-            CustomAppBar()
+            CustomAppBar(userStore)
         },
         content = {
             ProductList(userStore)
@@ -68,7 +70,9 @@ fun MainContent() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CustomAppBar() {
+fun CustomAppBar(userStore: UserStore) {
+    var isShoppingCartOpen by remember { mutableStateOf(false) }
+
     TopAppBar(
         title = {
             Text("Nibha's App")
@@ -76,7 +80,7 @@ fun CustomAppBar() {
         actions = {
             IconButton(
                 onClick = {
-                    // Cart button logic here
+                    isShoppingCartOpen = true
                 }
             ) {
                 Icon(Icons.Default.ShoppingCart, contentDescription = null)
@@ -90,6 +94,15 @@ fun CustomAppBar() {
             }
         }
     )
+
+    if (isShoppingCartOpen) {
+        ShoppingCart(
+            userStore = userStore,
+            onDismiss = {
+                isShoppingCartOpen = false
+            }
+        )
+    }
 }
 
 @Composable
@@ -115,6 +128,7 @@ fun ProductList(userStore: UserStore) {
         }
     }
 }
+
 @Composable
 fun ProductItem(productName: String, price: String, onAddToCartClick: () -> Unit) {
     Card(
@@ -152,6 +166,53 @@ fun ProductItem(productName: String, price: String, onAddToCartClick: () -> Unit
         }
     }
 }
+
+@Composable
+fun ShoppingCart(userStore: UserStore, onDismiss: () -> Unit) {
+    var details by remember(userStore) { mutableStateOf(emptyList<String>()) }
+
+    DisposableEffect(userStore) {
+        val detailsFlow = userStore.getDetails
+        val job = GlobalScope.launch {
+            detailsFlow.collect { updatedDetails ->
+                details = updatedDetails
+            }
+        }
+        onDispose {
+            job.cancel()
+        }
+    }
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(dismissOnClickOutside = true),
+        content = {
+            Column(
+                modifier = Modifier
+                    .padding(16.dp)
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.background) // Ensure a solid background color
+            ) {
+                Text("Shopping Cart Items", style = MaterialTheme.typography.bodyLarge)
+                Spacer(modifier = Modifier.height(8.dp))
+
+                if (details.isNotEmpty()) {
+                    details.forEach { item ->
+                        Text(
+                            text = "\u2022 $item", // Bullet point for each item
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.padding(vertical = 4.dp)
+                        )
+                    }
+                } else {
+                    Text("Your shopping cart is empty.", style = MaterialTheme.typography.bodyLarge)
+                }
+            }
+        }
+    )
+}
+
+
 
 
 fun getFruitName(index: Int): String {
