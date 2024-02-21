@@ -41,10 +41,12 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             Nibha_MAPD721_TestTheme {
+                // Surface for the entire app
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
+                    // Main content of the app
                     MainContent()
                 }
             }
@@ -55,13 +57,17 @@ class MainActivity : ComponentActivity() {
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun MainContent() {
+    // Getting the current context
     val context = LocalContext.current
+    // Creating an instance of UserStore
     val userStore = remember { UserStore(context) }
-
+// Scaffold for the app structure
     Scaffold(
         topBar = {
+            // Custom app bar with title and actions
             CustomAppBar(userStore)
         },
+        // Product list displayed in a LazyColumn
         content = {
             ProductList(userStore)
         }
@@ -71,14 +77,19 @@ fun MainContent() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CustomAppBar(userStore: UserStore) {
+    // State variable for tracking the shopping cart's visibility
     var isShoppingCartOpen by remember { mutableStateOf(false) }
+    // Coroutine scope for handling asynchronous operations
     val coroutineScope = rememberCoroutineScope()
 
+    // TopAppBar with title and actions
     TopAppBar(
         title = {
             Text("Nibha's App")
         },
+
         actions = {
+            // Shopping cart icon button
             IconButton(
                 onClick = {
                     isShoppingCartOpen = true
@@ -86,6 +97,7 @@ fun CustomAppBar(userStore: UserStore) {
             ) {
                 Icon(Icons.Default.ShoppingCart, contentDescription = null)
             }
+            // Clear button to remove items from the cart
             IconButton(
                 onClick = {
                     // Clear button logic here
@@ -94,11 +106,11 @@ fun CustomAppBar(userStore: UserStore) {
                     }
                 }
             ) {
-                Text("Clear")  // Change the Clear button from icon to text
+                Text("Clear")
             }
         }
     )
-
+// Display shopping cart dialog if it is open
     if (isShoppingCartOpen) {
         ShoppingCart(
             userStore = userStore,
@@ -111,21 +123,28 @@ fun CustomAppBar(userStore: UserStore) {
 
 @Composable
 fun ProductList(userStore: UserStore) {
+    // Getting the current context
     val context = LocalContext.current
+    // Coroutine scope for handling asynchronous operations
     val coroutineScope = rememberCoroutineScope()
+    // State for collecting and updating cart details
     val detailsState by rememberUpdatedState(userStore.getDetails.collectAsState(emptyList()))
 
+    // LazyColumn for displaying the product list
     LazyColumn(
         modifier = Modifier
             .padding(top = 56.dp + 8.dp)
     ) {
+        // Generating product items based on the fruit names
         items(5) { index ->
             ProductItem(
                 productName = getFruitName(index),
                 price = "${(index + 1) * 2}$",
                 onAddToCartClick = {
                     coroutineScope.launch {
+                        // Adding item to the cart
                         userStore.saveDetails(getFruitName(index), getFruitName(index), "${(index + 1) * 2}$")
+                        // Displaying a toast message
                         Toast.makeText(context, "Item added to cart", Toast.LENGTH_SHORT).show()
                     }
                 }
@@ -137,11 +156,13 @@ fun ProductList(userStore: UserStore) {
 
 @Composable
 fun ProductItem(productName: String, price: String, onAddToCartClick: () -> Unit) {
+    // Card for each product item
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(8.dp)
     ) {
+        // Row with product details and add to cart button
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -149,7 +170,7 @@ fun ProductItem(productName: String, price: String, onAddToCartClick: () -> Unit
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween // Adjusted arrangement
         ) {
-
+            // Column for product name and price
             Column(
                 modifier = Modifier
                     .weight(1f)
@@ -159,7 +180,7 @@ fun ProductItem(productName: String, price: String, onAddToCartClick: () -> Unit
             }
 
             Spacer(modifier = Modifier.width(16.dp))
-
+            // Button to add product to cart
             Button(
                 onClick = {
                     onAddToCartClick()
@@ -174,9 +195,11 @@ fun ProductItem(productName: String, price: String, onAddToCartClick: () -> Unit
 }
 @Composable
 fun ShoppingCart(userStore: UserStore, onDismiss: () -> Unit) {
+    // State for collecting and updating cart details
     val detailsState = userStore.getDetails.collectAsState(null)
     val details = detailsState.value ?: emptyList()
 
+    // Dialog for displaying shopping cart items
     Dialog(
         onDismissRequest = onDismiss,
         content = {
@@ -217,13 +240,7 @@ fun ShoppingCart(userStore: UserStore, onDismiss: () -> Unit) {
     )
 }
 
-
-
-
-
-
-
-
+// Function to get the fruit name based on the index
 fun getFruitName(index: Int): String {
     return when (index) {
         0 -> "Apple"
